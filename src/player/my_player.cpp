@@ -287,12 +287,14 @@ namespace ttt::my_player {
         get_candidates_light(root, top_moves, top_cnt, m_sign);
         if (top_cnt == 0) return {10, 10};
 
+        // 1. мгновенная победа
         for (int i = 0; i < top_cnt; ++i) {
             LightState test = root;
             test.apply_move(top_moves[i].x, top_moves[i].y);
             if (is_winning(test, m_sign)) return top_moves[i];
         }
 
+        // 2. блокировка
         Sign opp = (m_sign == Sign::X) ? Sign::O : Sign::X;
         for (int i = 0; i < top_cnt; ++i) {
             LightState test = root;
@@ -300,12 +302,13 @@ namespace ttt::my_player {
             if (is_winning(test, opp)) return top_moves[i];
         }
 
+        // 3. минимакс с deadline (глубина 2)
         clock_t deadline = clock() + (CLOCKS_PER_SEC * 80 / 1000);
         Point best = top_moves[0];
         int best_score = -1000000000;
 
         for (int i = 0; i < top_cnt; ++i) {
-            if (clock() > deadline) break; 
+            if (clock() > deadline) break;   // если время вышло, берём лучший ход
             LightState child = root;
             child.apply_move(top_moves[i].x, top_moves[i].y);
             int score = minimax(child, 2, false, m_sign, deadline);
@@ -316,6 +319,8 @@ namespace ttt::my_player {
         }
         return best;
     }
+
+
 
 
 }; // namespace ttt::my_player
