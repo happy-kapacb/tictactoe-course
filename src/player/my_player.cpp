@@ -1,5 +1,6 @@
 #include "my_player.hpp"
 #include <cstdlib>
+#include <ctime>
 
 namespace ttt::my_player {
 
@@ -217,8 +218,12 @@ namespace ttt::my_player {
         }
     }
 
-    static int minimax(const LightState& ls, int depth, bool maximizing, Sign my_sign) {
+    static int minimax(const LightState& ls, int depth, bool maximizing, Sign my_sign, clock_t deadline) {
+        if (clock() > deadline)
+            return score_all_light(ls, my_sign);  
+
         if (depth == 0) return score_all_light(ls, my_sign);
+
         Point candidates[400];
         int cand_count = 0;
         get_inner_candidates(ls, candidates, cand_count);
@@ -229,7 +234,7 @@ namespace ttt::my_player {
             for (int i = 0; i < cand_count; ++i) {
                 LightState child = ls;
                 child.apply_move(candidates[i].x, candidates[i].y);
-                int val = minimax(child, depth - 1, false, my_sign);
+                int val = minimax(child, depth - 1, false, my_sign, deadline);
                 if (val > best) best = val;
             }
             return best;
@@ -238,7 +243,7 @@ namespace ttt::my_player {
             for (int i = 0; i < cand_count; ++i) {
                 LightState child = ls;
                 child.apply_move(candidates[i].x, candidates[i].y);
-                int val = minimax(child, depth - 1, true, my_sign);
+                int val = minimax(child, depth - 1, true, my_sign, deadline);
                 if (val < best) best = val;
             }
             return best;
@@ -270,46 +275,52 @@ namespace ttt::my_player {
     void MyPlayer::set_sign(Sign sign) { m_sign = sign; }
     const char* MyPlayer::get_name() const { return m_name; }
 
-Point MyPlayer::make_move(const State& state) {
-    if (state.get_move_no() == 0)
-        return away_from_walls(state);
+    Point MyPlayer::make_move(const State& state) {
+        if (state.get_move_no() == 0)
+            return away_from_walls(state);
 
-    LightState root;
-    root.from_state(state);
+        LightState root;
+        root.from_state(state);
 
-    Point top_moves[MAX_CANDIDATES];
-    int top_cnt = 0;
-    get_candidates_light(root, top_moves, top_cnt, m_sign);
-    if (top_cnt == 0) return {10, 10};
+        Point top_moves[MAX_CANDIDATES];
+        int top_cnt = 0;
+        get_candidates_light(root, top_moves, top_cnt, m_sign);
+        if (top_cnt == 0) return {10, 10};
 
-    for (int i = 0; i < top_cnt; ++i) {
-        LightState test = root;
-        test.apply_move(top_moves[i].x, top_moves[i].y);
-        if (is_winning(test, m_sign))
-            return top_moves[i];
-    }
-
-    Sign opp = (m_sign == Sign::X) ? Sign::O : Sign::X;
-    for (int i = 0; i < top_cnt; ++i) {
-        LightState test = root;
-        test.grid[top_moves[i].y][top_moves[i].x] = opp;
-        if (is_winning(test, opp))
-            return top_moves[i];
-    }
-
-    Point best = top_moves[0];
-    int best_score = -1000000000;
-    for (int i = 0; i < top_cnt; ++i) {
-        LightState child = root;
-        child.apply_move(top_moves[i].x, top_moves[i].y);
-        int score = minimax(child, 2, false, m_sign);
-        if (score > best_score) {
-            best_score = score;
-            best = top_moves[i];
+        // 1. мгновенная победа
+        for (int i = 0; i < top_cnt; ++i) {
+            LightState test = root;
+            test.apply_move(top_moves[i].x, top_moves[i].y);
+            if (is_winning(test, m_sign)) return top_moves[i];
         }
+
+        // 2. блокировка
+        Sign opp = (m_sign == Sign::X) ? Sign::O : Sign::X;
+        for (int i = 0; i < top_cnt; ++i) {
+            LightState test = root;
+            test.grid[top_moves[i].y][top_moves[i].x] = opp;
+            if (is_winning(test, opp)) return top_moves[i];
+        }
+
+        // 3. минимакс с deadline (глубина 2)
+        clock_t deadline = clock() + (CLOCKS_PER_SEC * 80 / 1000);
+        Point best = top_moves[0];
+        int best_score = -1000000000;
+
+        for (int i = 0; i < top_cnt; ++i) {
+            if (clock() > deadline) break;   // если время вышло, берём лучший ход
+            LightState child = root;
+            child.apply_move(top_moves[i].x, top_moves[i].y);
+            int score = minimax(child, 2, false, m_sign, deadline);
+            if (score > best_score) {
+                best_score = score;
+                best = top_moves[i];
+            }
+        }
+        return best;
     }
-    return best;
-}
+
+
 
 
 }; // namespace ttt::my_player
