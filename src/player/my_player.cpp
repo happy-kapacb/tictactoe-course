@@ -309,6 +309,14 @@ namespace ttt::my_player {
             if (is_winning(test, m_sign)) return top_moves[i];
         }
 
+        // 1. мгновенная победа
+        for (int i = 0; i < top_cnt; ++i) {
+            LightState test = root;
+            test.apply_move(top_moves[i].x, top_moves[i].y);
+            if (is_winning(test, m_sign)) return top_moves[i];
+        }
+
+        // 2. блокировка
         Sign opp = (m_sign == Sign::X) ? Sign::O : Sign::X;
         for (int i = 0; i < top_cnt; ++i) {
             LightState test = root;
