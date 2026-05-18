@@ -1,6 +1,8 @@
 #include "my_player.hpp"
 #include <cstdlib>
 #include <ctime>
+#include <climits>
+#include <cmath>
 
 namespace ttt::my_player {
 
@@ -54,12 +56,12 @@ namespace ttt::my_player {
         }
         if (my > 0 && opp > 0) return 0;
         if (my == 5) return 10000000;
-        if (my == 4 && none == 1) return 70000;
+        if (my == 4 && none == 1) return 50000;
         if (my == 3 && none == 2) return 1200;
         if (my == 2 && none == 3) return 150;
         if (opp == 5) return -10000000;
-        if (opp == 4 && none == 1) return -70000;
-        if (opp == 3 && none == 2) return -4000;
+        if (opp == 4 && none == 1) return -50000;
+        if (opp == 3 && none == 2) return -1200;
         if (opp == 2 && none == 3) return -50;
         return 0;
     }
@@ -89,6 +91,7 @@ namespace ttt::my_player {
         return total;
     }
 
+    // Быстрая оценка клетки
     static int quick_score(const LightState& ls, int x, int y, Sign my_sign) {
         int total = 0;
         for (int dir = 0; dir < 4; ++dir) {
