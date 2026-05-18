@@ -12,7 +12,7 @@ endif()
 
 # NOTE: set this variable to "PREBUILT" when you downloaded prebuilt tttcore
 # library with baseline player.
-#set(BUILD_TTTCORE "PREBUILT")
+set(BUILD_TTTCORE "PREBUILT")
 
 if (BUILD_TTTCORE STREQUAL "PREBUILT")
   find_library(TTTCORE_LIB libtttcore.a PATHS libs)
