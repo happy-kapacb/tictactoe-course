@@ -107,7 +107,6 @@ namespace ttt::my_player {
         return total;
     }
 
-    // Сортировка для верхнего уровня (по быстрой оценке)
     static void sort_candidates_light(Point* candidates, int count,
                                       const LightState& ls, Sign my_sign) {
         for (int i = 0; i < count - 1; ++i) {
@@ -128,7 +127,6 @@ namespace ttt::my_player {
         }
     }
 
-    // Полный сбор кандидатов для верхнего уровня (с сортировкой)
     static void get_candidates_light(const LightState& ls, Point* candidates,
                                      int& count, Sign my_sign) {
         static bool near[20][20] = { false };
@@ -182,7 +180,6 @@ namespace ttt::my_player {
         }
     }
 
-    // Быстрый сбор для узлов дерева (без сортировки)
     static void get_inner_candidates(const LightState& ls, Point* candidates, int& count) {
         static bool near[20][20] = {false};
         for (int y = 0; y < 20; ++y)
@@ -333,7 +330,6 @@ namespace ttt::my_player {
             return { 10, 10 };
         }
 
-        // 1. Немедленный выигрыш
         for (int i = 0; i < cand_count; ++i) {
             LightState test = root;
             test.apply_move(candidates[i].x, candidates[i].y);
@@ -342,7 +338,6 @@ namespace ttt::my_player {
             }
         }
 
-        // 2. Блокировка выигрыша противника
         Sign opp_sign = (m_sign == Sign::X) ? Sign::O : Sign::X;
         for (int i = 0; i < cand_count; ++i) {
             LightState test = root;
@@ -352,7 +347,6 @@ namespace ttt::my_player {
             }
         }
 
-        // 3. Итеративное углубление
         clock_t start_time = clock();
         clock_t deadline = start_time + (CLOCKS_PER_SEC * 80 / 1000);
 
